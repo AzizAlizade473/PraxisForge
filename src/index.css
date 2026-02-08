@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-glow: conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #e92a67 360deg);
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 font-sans antialiased overflow-x-hidden;
+  background-color: #020617; /* Fallback for Slate-950 */
+  min-height: 100vh;
+}
+
+/* Custom Glass Utilities */
+.glass-panel {
+  @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-xl;
+}
+
+.glass-card {
+  @apply bg-white/5 backdrop-blur-lg border border-white/5 shadow-lg transition-all duration-300;
+}
+
+.neon-text {
+  text-shadow: 0 0 20px rgba(167, 139, 250, 0.5);
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400;
+}
