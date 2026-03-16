@@ -1,25 +1,64 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useIdea } from '../context/IdeaContext';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { useProject } from '../context/ProjectContext';
 import { ArrowLeft, CheckCircle, Info, Download, RefreshCw, Wand2, Loader2, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { praxisService } from '../services/praxisService';
 
 const ResultsDashboard = () => {
-  const { results, selectedMode, refineNode } = useIdea();
+  const { selectedMode, activeProjectId, setActiveProjectId } = useProject();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [results, setResults] = useState(null);
   const [activeSection, setActiveSection] = useState(0);
-
-  // Feature 1 State: Micro-Refinement
-  const [refiningTarget, setRefiningTarget] = useState({ sectionId: null, index: null });
-  const [refinePrompt, setRefinePrompt] = useState("");
-  const[isRefining, setIsRefining] = useState(false);
 
   // Feature 2 State: Notion Sync Theatre
   const[syncState, setSyncState] = useState('idle'); // idle | syncing | done
+  const [loading, setLoading] = useState(false);
 
-  if (!results) return <div className="pt-32 text-center text-white">No data. <button onClick={() => navigate('/')}>Back</button></div>;
+  const projectId = searchParams.get('projectId') || activeProjectId;
 
-  if (!results) return <div className="pt-32 text-center text-white">No data. <button onClick={() => navigate('/')}>Back</button></div>;
+  useEffect(() => {
+    if (!projectId) {
+      navigate('/');
+      return;
+    }
+    setActiveProjectId(projectId);
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [summary, brain] = await Promise.all([
+          praxisService.getProjectSummary(projectId),
+          praxisService.getBrainSummary(projectId),
+        ]);
+
+        const sections = Array.isArray(brain.sections) ? brain.sections : [];
+
+        setResults({
+          project_mode: summary.mode,
+          task_overview: summary.task_overview || {},
+          summary: summary.project_summary || summary.summary,
+          key_insights: summary.key_insights || [],
+          sections,
+        });
+      } catch (err) {
+        console.error('Failed to load project data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [projectId, navigate, setActiveProjectId]);
+
+  if (loading || !results) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        <div className="text-slate-400">Loading project...</div>
+      </div>
+    );
+  }
 
   // Sync to Notion Animation Logic
   const handleNotionSync = () => {
@@ -27,18 +66,6 @@ const ResultsDashboard = () => {
     setSyncState('syncing');
     setTimeout(() => setSyncState('done'), 2500);
     setTimeout(() => setSyncState('idle'), 5000);
-  };
-
-  const handleRefineSubmit = async (e) => {
-    e.preventDefault();
-    if (!refinePrompt.trim()) return;
-    
-    setIsRefining(true);
-    await refineNode(null, refiningTarget.id, refinePrompt);
-    
-    setIsRefining(false);
-    setRefiningTarget({ id: null });
-    setRefinePrompt("");
   };
 
   return (
@@ -52,7 +79,7 @@ const ResultsDashboard = () => {
         
         {/* 🌟 FEATURE 2: Export & Sync Ecosystem */}
         <div className="flex items-center gap-3">
-           <span className="px-4 py-2 rounded-lg bg-slate-900 border border-white/10 text-slate-400 text-sm font-mono">
+             <span className="px-4 py-2 rounded-lg bg-slate-900 border border-white/10 text-slate-400 text-sm font-mono">
              {selectedMode} Mode
            </span>
            

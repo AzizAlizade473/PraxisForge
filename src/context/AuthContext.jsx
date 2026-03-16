@@ -1,67 +1,118 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-// import { authService } from '../services/authService'; // Uncomment when backend is ready
+import { authService } from '../services/authService';
+
 
 const AuthContext = createContext();
 
-// ==========================================
-// 🚀 DEVELOPMENT TOGGLE
-// Set this to `false` when your backend team is ready!
-// ==========================================
-const USE_MOCK_BACKEND = true;
+
+const USE_MOCK_BACKEND = false;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user is already logged in on refresh
+
   useEffect(() => {
     const initAuth = async () => {
-      const savedUser = localStorage.getItem('forge_user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+      const token = localStorage.getItem('forge_token');
+      if (!token) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const profile = await authService.getProfile();
+        const userData = profile?.user || profile;
+        if (userData) {
+          setUser(userData);
+          localStorage.setItem('forge_user', JSON.stringify(userData));
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        localStorage.removeItem('forge_token');
+        localStorage.removeItem('forge_user');
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
     initAuth();
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     try {
       if (USE_MOCK_BACKEND) {
-        // MOCK LOGIN
-        const mockUser = { email, name: email.split('@')[0], joined: new Date().toLocaleDateString() };
+        const mockUser = { username, name: username, joined: new Date().toLocaleDateString() };
         setUser(mockUser);
         localStorage.setItem('forge_user', JSON.stringify(mockUser));
         return { success: true };
       } else {
-        // REAL API LOGIN (For when backend is ready)
-        // const data = await authService.login(email, password);
-        // localStorage.setItem('forge_token', data.token);
-        // setUser(data.user);
+        const data = await authService.login(username, password);
+        if (data?.token) {
+          localStorage.setItem('forge_token', data.token);
+        }
+        if (data?.user) {
+          setUser(data.user);
+          localStorage.setItem('forge_user', JSON.stringify(data.user));
+        }
         return { success: true };
       }
     } catch (error) {
-      return { success: false, error: "Invalid credentials or server is down." };
+      const detail = error?.response?.data?.detail;
+      let message;
+
+      if (Array.isArray(detail)) {
+        message = detail.map((d) => d.msg).join(' ');
+      } else if (typeof detail === 'string') {
+        message = detail;
+      } else if (typeof error?.response?.data?.message === 'string') {
+        message = error.response.data.message;
+      } else if (typeof error?.message === 'string') {
+        message = error.message;
+      } else {
+        message = "Invalid credentials or server is down.";
+      }
+
+      return { success: false, error: message };
     }
   };
 
-  const signup = async (email, password, name) => {
+  const signup = async (username, email, password, role = 'user') => {
     try {
       if (USE_MOCK_BACKEND) {
-        // MOCK SIGNUP
-        const mockUser = { email, name: name || email.split('@')[0], joined: new Date().toLocaleDateString() };
+        const mockUser = { email, name: username, joined: new Date().toLocaleDateString(), role };
         setUser(mockUser);
         localStorage.setItem('forge_user', JSON.stringify(mockUser));
         return { success: true };
       } else {
-        // REAL API SIGNUP
-        // const data = await authService.register(email, password, name);
-        // localStorage.setItem('forge_token', data.token);
-        // setUser(data.user);
+        const data = await authService.register(username, email, password, role);
+        if (data?.token) {
+          localStorage.setItem('forge_token', data.token);
+        }
+        if (data?.user) {
+          setUser(data.user);
+          localStorage.setItem('forge_user', JSON.stringify(data.user));
+        }
         return { success: true };
       }
     } catch (error) {
-      return { success: false, error: "Registration failed." };
+      const detail = error?.response?.data?.detail;
+      let message;
+
+      if (Array.isArray(detail)) {
+        message = detail.map((d) => d.msg).join(' ');
+      } else if (typeof detail === 'string') {
+        message = detail;
+      } else if (typeof error?.response?.data?.message === 'string') {
+        message = error.response.data.message;
+      } else if (typeof error?.message === 'string') {
+        message = error.message;
+      } else {
+        message = "Registration failed.";
+      }
+
+      return { success: false, error: message };
     }
   };
 

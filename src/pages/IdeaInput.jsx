@@ -2,13 +2,15 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Type, FileUp, Sparkles, StopCircle } from 'lucide-react';
-import { useIdea } from '../context/IdeaContext';
+import { useProject } from '../context/ProjectContext';
+import { praxisService } from '../services/praxisService';
 
 const IdeaInput = () => {
-  const { userIdea, setUserIdea, selectedMode } = useIdea();
+  const { userIdea, setUserIdea, selectedMode, projectName, setProjectName, setActiveProjectId } = useProject();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('text');
   const [isListening, setIsListening] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
 
   // VOICE RECOGNITION LOGIC
@@ -52,6 +54,33 @@ const IdeaInput = () => {
     }
   };
 
+  const handleForge = async () => {
+    if (!projectName.trim()) {
+      alert('Please enter a project name.');
+      return;
+    }
+    if (!userIdea.trim()) {
+      alert('Please describe your idea.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const project = await praxisService.createProject(projectName.trim(), userIdea.trim(), selectedMode);
+      const projectId = project.id || project.projectId || project.uuid;
+      if (!projectId) {
+        throw new Error('Backend did not return a project id.');
+      }
+      setActiveProjectId(projectId);
+      navigate(`/processing?projectId=${encodeURIComponent(projectId)}`);
+    } catch (err) {
+      console.error('Failed to create project', err);
+      alert('Failed to create project. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pt-24 px-4 flex items-center justify-center">
       <div className="glass-panel w-full max-w-3xl rounded-3xl p-6">
@@ -60,6 +89,14 @@ const IdeaInput = () => {
           <TabBtn active={activeTab === 'voice'} onClick={() => setActiveTab('voice')} icon={<Mic size={18}/>} label="Voice" />
           <TabBtn active={activeTab === 'upload'} onClick={() => setActiveTab('upload')} icon={<FileUp size={18}/>} label="Upload" />
         </div>
+
+        <input
+          type="text"
+          className="w-full mb-4 bg-slate-950 border border-white/10 rounded-xl p-3 text-white"
+          placeholder="Project Name (required)"
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
+        />
 
         {activeTab === 'text' && (
           <textarea 
@@ -92,10 +129,12 @@ const IdeaInput = () => {
         )}
 
         <button 
-          onClick={() => navigate('/processing')}
-          className="w-full mt-6 py-4 bg-indigo-600 rounded-xl font-bold flex items-center justify-center gap-2"
+          onClick={handleForge}
+          disabled={isSubmitting}
+          className="w-full mt-6 py-4 bg-indigo-600 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-60"
         >
-          <Sparkles /> Forge My Idea
+          {isSubmitting ? <Sparkles className="animate-pulse" /> : <Sparkles />}
+          {isSubmitting ? 'Forging Project...' : 'Forge Concept'}
         </button>
       </div>
     </div>

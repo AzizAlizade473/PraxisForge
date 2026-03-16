@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'r
 import { AnimatePresence } from 'framer-motion';
 
 // Context Providers
-import { IdeaProvider } from './context/IdeaContext';
+import { ProjectProvider } from './context/ProjectContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Components
@@ -89,14 +89,14 @@ const AnimatedRoutes = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <IdeaProvider>
+      <ProjectProvider>
         <Router>
           <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500/30">
             <Navbar />
             <AnimatedRoutes />
           </div>
         </Router>
-      </IdeaProvider>
+      </ProjectProvider>
     </AuthProvider>
   );
 }

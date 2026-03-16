@@ -1,38 +1,42 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Rocket, Code2, Users } from 'lucide-react';
-import { useIdea } from '../context/IdeaContext';
+import { Rocket, Code2, Building2, Lightbulb } from 'lucide-react';
+import { useProject } from '../context/ProjectContext';
 
 const modes = [
-  { 
-    id: 'Student', 
-    icon: GraduationCap, 
-    color: 'text-yellow-400', 
-    desc: 'Structure projects for grades. Focus on tech stack & documentation.' 
+  {
+    id: 'startup',
+    label: 'Startup',
+    icon: Rocket,
+    color: 'text-emerald-400',
+    desc: 'Ship a venture-scale SaaS. Focus on MVP, market fit, and fundraising narrative.',
   },
-  { 
-    id: 'Entrepreneur', 
-    icon: Rocket, 
-    color: 'text-emerald-400', 
-    desc: 'Validate business viability. Focus on MVP features & market fit.' 
+  {
+    id: 'hackathon',
+    label: 'Hackathon',
+    icon: Code2,
+    color: 'text-cyan-400',
+    desc: 'Win the weekend. Optimize for speed, wow-factor, and live demo reliability.',
   },
-  { 
-    id: 'Hackathon', 
-    icon: Code2, 
-    color: 'text-cyan-400', 
-    desc: 'Speed to demo. Focus on impact, complexity, and pitch.' 
+  {
+    id: 'enterprise',
+    label: 'Enterprise',
+    icon: Building2,
+    color: 'text-purple-400',
+    desc: 'Design for teams and scale. Emphasize security, integrations, and governance.',
   },
-  { 
-    id: 'Team', 
-    icon: Users, 
-    color: 'text-purple-400', 
-    desc: 'Divide and conquer. Focus on role allocation & tasks.' 
+  {
+    id: 'idea',
+    label: 'Idea Lab',
+    icon: Lightbulb,
+    color: 'text-yellow-400',
+    desc: 'Explore and validate raw concepts before committing to a full build.',
   },
 ];
 
 const ModeSelection = () => {
-  const { setSelectedMode } = useIdea();
+  const { setSelectedMode } = useProject();
   const navigate = useNavigate();
 
   const handleSelect = (modeId) => {
@@ -84,7 +88,7 @@ const ModeSelection = () => {
               <div className={`p-3 w-fit rounded-lg bg-slate-900/50 ${mode.color}`}>
                 <mode.icon size={32} />
               </div>
-              <h3 className="text-2xl font-bold">{mode.id} Mode</h3>
+              <h3 className="text-2xl font-bold">{mode.label} Mode</h3>
               <p className="text-slate-400 group-hover:text-slate-200 transition-colors">
                 {mode.desc}
               </p>

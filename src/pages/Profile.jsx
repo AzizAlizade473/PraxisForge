@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useIdea } from '../context/IdeaContext';
+import { useProject } from '../context/ProjectContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, Clock, Settings, Sparkles, 
@@ -10,7 +10,7 @@ import {
 
 const Profile = () => {
   const { user, logout } = useAuth();
-  const { history } = useIdea();
+  const { /* future: project history */ } = useProject();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('history');

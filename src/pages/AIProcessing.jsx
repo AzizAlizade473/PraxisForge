@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { useIdea } from '../context/IdeaContext';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useProject } from '../context/ProjectContext';
 import { Cpu, Database, Sparkles, Binary } from 'lucide-react';
 
 const AIProcessing = () => {
   const navigate = useNavigate();
-  const { processIdea } = useIdea();
+  const [searchParams] = useSearchParams();
+  const { setActiveProjectId } = useProject();
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
@@ -17,24 +18,28 @@ const AIProcessing = () => {
   ];
 
   useEffect(() => {
-    // 1. Generate the data immediately so it's ready when the page changes
-    processIdea();
+    const projectId = searchParams.get('projectId');
+    if (!projectId) {
+      navigate('/');
+      return;
+    }
 
-    // 2. Cycle through the text steps visually
+    setActiveProjectId(projectId);
+
+    const timeout = setTimeout(() => {
+      navigate(`/results?projectId=${encodeURIComponent(projectId)}`);
+    }, 4000);
+
+    // Cycle through the text steps visually
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
-    }, 1200);
-
-    // 3. Final Redirect after 5 seconds
-    const redirectTimer = setTimeout(() => {
-      navigate('/results');
-    }, 5000);
+    }, 1500);
 
     return () => {
       clearInterval(stepInterval);
-      clearTimeout(redirectTimer);
+      clearTimeout(timeout);
     };
-  }, [navigate]);
+  }, [navigate, searchParams, setActiveProjectId]);
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden">

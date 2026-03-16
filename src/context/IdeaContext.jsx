@@ -11,6 +11,59 @@ export const IdeaProvider = ({ children }) => {
   const [results, setResults] = useState(null);
   const [history, setHistory] = useState([]);
 
+  const normalizeResults = (rawResults, mode) => {
+    if (!rawResults) return rawResults;
+    if (Array.isArray(rawResults.sections) && rawResults.sections.length > 0) return rawResults;
+
+    // Back-compat: derive `sections` from older backend fields so the UI stays functional
+    // until the backend ships the new dynamic `sections` contract.
+    const derivedSectionsByMode = {
+      Student: [
+        { id: 'tech-stack', label: 'Tech Stack' },
+        { id: 'learning-roadmap', label: 'Learning Roadmap' },
+        { id: 'academic-goals', label: 'Academic Goals' }
+      ],
+      Entrepreneur: [
+        { id: 'competitors', label: 'Competitor Analysis' },
+        { id: 'business-roadmap', label: 'Business Roadmap' },
+        { id: 'revenue-model', label: 'Revenue Model' }
+      ],
+      Hackathon: [
+        { id: 'tech-stack', label: 'Tech Stack' },
+        { id: 'roadmap-48h', label: '48-Hour Roadmap' },
+        { id: 'pitch-strategy', label: 'Pitch Strategy' }
+      ],
+      Team: [
+        { id: 'tech-stack', label: 'Tech Stack' },
+        { id: 'agile-roadmap', label: 'Agile Roadmap' },
+        { id: 'role-distribution', label: 'Role Distribution' }
+      ]
+    };
+
+    // If the backend still returns `key_facts`/`architecture_overview` etc,
+    // we map them into the first 1–3 sections for a reasonable fallback.
+    const fallbackContent = [];
+    if (Array.isArray(rawResults.key_facts) && rawResults.key_facts.length > 0) {
+      fallbackContent.push(...rawResults.key_facts.map(f => f?.content).filter(Boolean));
+    }
+    if (rawResults.architecture_overview) fallbackContent.push(String(rawResults.architecture_overview));
+    if (rawResults.recommended_db_structure) fallbackContent.push(String(rawResults.recommended_db_structure));
+    if (Array.isArray(rawResults.key_insights) && rawResults.key_insights.length > 0) {
+      fallbackContent.push(...rawResults.key_insights.map(String));
+    }
+
+    const baseSections = derivedSectionsByMode[mode] || derivedSectionsByMode.Student;
+    const sections = baseSections.map((s, idx) => ({
+      ...s,
+      content:
+        idx === 0 && fallbackContent.length > 0
+          ? fallbackContent
+          : ["(Waiting on backend to return mode-specific section content.)"]
+    }));
+
+    return { ...rawResults, sections };
+  };
+
   useEffect(() => {
     loadHistory();
   },[]);
@@ -27,7 +80,7 @@ export const IdeaProvider = ({ children }) => {
   const processIdea = async () => {
     try {
       const finalData = await ideaService.generateIdea(selectedMode, userIdea);
-      setResults(finalData);
+      setResults(normalizeResults(finalData, selectedMode));
       await loadHistory();
       return { success: true };
     } catch (error) {
