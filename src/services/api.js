@@ -1,8 +1,12 @@
 import axios from 'axios';
 
-// Main PraxisForge API instance (proxied via Vite dev server)
+// Main PraxisForge API instance (talks directly to deployed backend)
+// Expect VITE_API_BASE_URL to already include the correct base path,
+// e.g. http://16.170.179.235/PraxisForge_Backend/api/v1
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL ||
+    'http://16.170.179.235/PraxisForge_Backend/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },

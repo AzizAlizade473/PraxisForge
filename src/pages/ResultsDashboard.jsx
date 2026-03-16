@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useProject } from '../context/ProjectContext';
-import { ArrowLeft, CheckCircle, Info, Download, RefreshCw, Wand2, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Info, Download, RefreshCw, Wand2, Loader2, Sparkles, Map } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { praxisService } from '../services/praxisService';
+import AnimatedRoadmap from '../components/AnimatedRoadmap';
+import ProjectChatbot from '../components/ProjectChatbot';
 
 const ResultsDashboard = () => {
   const { selectedMode, activeProjectId, setActiveProjectId } = useProject();
@@ -148,7 +150,7 @@ const ResultsDashboard = () => {
               {(results.sections || []).map((section, index) => (
                 <button
                   key={section.id || index}
-                  onClick={() => { setActiveSection(index); setRefiningTarget({ id: null }); }}
+                  onClick={() => setActiveSection(index)}
                   className={`flex-1 py-5 text-sm font-bold transition-all ${
                     activeSection === index
                       ? 'bg-indigo-600 border-t-2 border-t-indigo-400 text-white shadow-inner'
@@ -162,8 +164,8 @@ const ResultsDashboard = () => {
 
             {/* Content Body */}
             <div className="p-8 md:p-10 flex-1 overflow-y-auto">
-              {results.sections && results.sections.length > 0 ? (
-                <div className="space-y-4">
+              {results.sections && results.sections.length > 0 && (
+                <div className="space-y-4 mb-8">
                   {Array.isArray(results.sections[activeSection]?.content) ? (
                     results.sections[activeSection].content.map((item, idx) => (
                       <div key={idx} className="relative group">
@@ -188,16 +190,29 @@ const ResultsDashboard = () => {
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="text-slate-400 text-center py-10">
-                  No sections available for this mode yet.
-                </div>
               )}
+
+              {/* ── Roadmap (always visible inside the panel) ──────── */}
+              <div className="border-t border-white/5 pt-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
+                    <Map size={16} className="text-emerald-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Project Roadmap</h2>
+                    <p className="text-[11px] text-slate-500">AI-generated execution timeline</p>
+                  </div>
+                </div>
+                <AnimatedRoadmap projectId={projectId} />
+              </div>
             </div>
             
           </div>
         </div>
       </div>
+
+      {/* Floating AI Chatbot */}
+      <ProjectChatbot projectId={projectId} />
     </div>
   );
 };

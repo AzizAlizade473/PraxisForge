@@ -1,17 +1,20 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      
-      '/api': {
-        target: 'http://localhost:5000', 
+      // PraxisForge main API
+      '/PraxisForge_Backend': {
+        target: 'http://16.170.179.235',
         changeOrigin: true,
-        secure: false,
-      }
-    }
-  }
-})
+      },
+      // Auth API
+      '/backend_forge': {
+        target: 'http://16.170.179.235',
+        changeOrigin: true,
+      },
+    },
+  },
+});
