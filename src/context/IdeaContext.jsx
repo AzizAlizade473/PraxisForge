@@ -1,87 +1,9 @@
-☆*°★*Aylin*★°*☆
-astronomy_movies
-Невидимый
-
-ezizroler — 25.05.2025 19:02
-ezizroler
- начал звонок, который продлился 12 минут. — 25.05.2025 19:02
-☆*°★*Aylin*★°*☆ — 25.05.2025 19:02
-ezizroler
- начал звонок, который продлился 13 минут. — 28.05.2025 18:44
-ezizroler
- начал звонок, который продлился 22 минуты. — 28.05.2025 23:20
-☆*°★*Aylin*★°*☆ — 05.06.2025 13:39
-hii
-ezizroler — 05.06.2025 13:39
-helloo
-ezizroler
- начал звонок, который продлился 4 минуты. — 05.06.2025 13:39
-ezizroler
- начал звонок, который продлился 2 минуты. — 05.06.2025 13:53
-☆*°★*Aylin*★°*☆
- начал звонок, который продлился час. — 20.07.2025 21:52
-ezizroler — 30.07.2025 21:22
-https://discord.gg/DBCCmuUh
-☆*°★*Aylin*★°*☆ — 19.08.2025 23:37
-sziz
-aziz
-servire ac
-ve ozunde bir gir baxda biz ne elemisik
-ezizroler — 19.08.2025 23:39
-Acdim
-ezizroler — 19.08.2025 23:39
-Gelecem bir gun
-☆*°★*Aylin*★°*☆ — 19.08.2025 23:39
-ozunde gir iki deqiqelik at least
-ezizroler — 19.08.2025 23:39
-10-15deq sonra MC acib gelerem
-☆*°★*Aylin*★°*☆ — 19.08.2025 23:40
-okay  amma gir.
-ezizroler — 19.08.2025 23:40
-Oke
-ezizroler — 08.09.2025 0:12
-https://discord.gg/kekzMNfm
-☆*°★*Aylin*★°*☆
- начал звонок, который продлился 2 часа. — 28.09.2025 17:00
-ezizroler — 28.09.2025 17:03
-internationalization
-ezizroler — 28.09.2025 18:49
-https://intranet.hbtn.io/corrections/1340392/correct
-☆*°★*Aylin*★°*☆ — 28.09.2025 18:51
-https://intranet.hbtn.io/corrections/1341118/correct
-☆*°★*Aylin*★°*☆
- начал звонок, который продлился несколько секунд. — 22.11.2025 20:34
-ezizroler
- начал звонок, который продлился минута. — 22.11.2025 20:37
-☆*°★*Aylin*★°*☆
- начинает звонок. — 23:14
-ezizroler — 23:35
-src/context/IdeaContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ideaService } from '../services/ideaService';
 
 const IdeaContext = createContext();
 
-const USE_MOCK_BACKEND = true; 
-
-message.txt
-6 кб
-src/pages/ResultsDashboard.jsx
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useIdea } from '../context/IdeaContext';
-import { ArrowLeft, CheckCircle, Info, Download, RefreshCw, Wand2, Loader2, Sparkles } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-
-message.txt
-11 кб
-﻿
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ideaService } from '../services/ideaService';
-
-const IdeaContext = createContext();
-
-const USE_MOCK_BACKEND = true; 
+const USE_MOCK_BACKEND = false; 
 
 export const IdeaProvider = ({ children }) => {
   const[userIdea, setUserIdea] = useState('');
@@ -94,11 +16,6 @@ export const IdeaProvider = ({ children }) => {
   },[]);
 
   const loadHistory = async () => {
-    if (USE_MOCK_BACKEND) {
-      const savedHistory = localStorage.getItem('forge_history');
-      if (savedHistory) setHistory(JSON.parse(savedHistory));
-      return;
-    }
     try {
       const data = await ideaService.getHistory();
       setHistory(data);
@@ -109,48 +26,44 @@ export const IdeaProvider = ({ children }) => {
 
   const processIdea = async () => {
     try {
-      let finalData;
-      if (USE_MOCK_BACKEND) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        finalData = generateMockResults(selectedMode, userIdea);
-        
-        const newHistoryItem = {
-          id: Date.now(),
-          title: userIdea.length > 0 ? userIdea.substring(0, 30) + "..." : "New Project",
-          mode: selectedMode,
-          date: new Date().toLocaleDateString()
-        };
-        const updatedHistory = [newHistoryItem, ...history];
-        setHistory(updatedHistory);
-        localStorage.setItem('forge_history', JSON.stringify(updatedHistory));
-      } else {
-        finalData = await ideaService.generateIdea(selectedMode, userIdea);
-        await loadHistory();
-      }
+      const finalData = await ideaService.generateIdea(selectedMode, userIdea);
       setResults(finalData);
+      await loadHistory();
       return { success: true };
     } catch (error) {
+      console.error("Failed to process idea:", error);
       return { success: false, error: "Failed to connect to the backend Forge." };
     }
   };
 
-  // 🌟 NEW FEATURE: Micro-Refinement Logic
-  const refineNode = async (sectionId, itemIndex, instruction) => {
-    if (USE_MOCK_BACKEND) {
-      // Simulate a 1.5s AI API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setResults(prev => {
-        const newResults = { ...prev };
-        const oldText = newResults.content[sectionId][itemIndex];
-        // Replace the old text with a "Mock AI" updated version
-        newResults.content[sectionId][itemIndex] = `✨ [Optimized for: ${instruction}] ${oldText}`;
-        return newResults;
-      });
-      return { success: true };
-    } else {
-      // For when your backend is ready:
-      // await ideaService.refineSpecificNode(sectionId, itemIndex, instruction);
+  const refineNode = async (sectionId, itemId, instruction) => {
+    try {
+      if (USE_MOCK_BACKEND) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setResults(prev => {
+          const newResults = { ...prev };
+          newResults.key_facts = newResults.key_facts.map(fact => 
+            fact.id === itemId ? { ...fact, content: `✨ [Refined: ${instruction}] ${fact.content}` } : fact
+          );
+          return newResults;
+        });
+        return { success: true };
+      } else {
+        const projectId = results.projectId; // captured from the generateIdea response
+        const updatedFact = await ideaService.updateFact(projectId, itemId, instruction);
+        
+        setResults(prev => {
+          const newResults = { ...prev };
+          newResults.key_facts = newResults.key_facts.map(fact => 
+            fact.id === itemId ? updatedFact : fact
+          );
+          return newResults;
+        });
+        return { success: true };
+      }
+    } catch(err) {
+      console.error("Failed to refine fact:", err);
+      return { success: false };
     }
   };
 
@@ -162,56 +75,143 @@ export const IdeaProvider = ({ children }) => {
       marketPotential: "Strong / Emerging",
     };
 
-    const modeConfigs = {
-      Student: {
-        theme: 'emerald',
-        sections:[
-          { id: 'tech', label: 'Architecture & Stack', icon: 'Code' },
-          { id: 'steps', label: 'Development Syllabus', icon: 'BookOpen' }
-        ],
-        content: {
-          tech:["Frontend: React 18 with Vite.", "Backend: Supabase for Auth.", "Deployment: Vercel Edge Functions."],
-          steps: ["Phase 1: Environment orchestration.", "Phase 2: Database schema normalization."]
+    // Dynamic, mode-specific sections used by the right-side panel.
+    // These mirror the structure the real backend is expected to return.
+    const sectionsByMode = {
+      Student: [
+        {
+          id: 'tech-stack',
+          label: 'Tech Stack',
+          content: [
+            "Primary Language: JavaScript / TypeScript with React.",
+            "Frontend: Vite + Tailwind CSS for rapid UI iteration.",
+            "Backend: Supabase or Firebase for auth, DB, and storage.",
+            "Dev Tools: GitHub + VS Code + Cursor for AI-assisted learning."
+          ]
+        },
+        {
+          id: 'learning-roadmap',
+          label: 'Learning Roadmap',
+          content: [
+            "Week 1: Learn React fundamentals (components, props, state).",
+            "Week 2: Add routing, simple forms, and API calls.",
+            "Week 3: Connect to a managed backend (Supabase/Firebase).",
+            "Week 4: Polish UI, add loading states, and write a short report."
+          ]
+        },
+        {
+          id: 'academic-goals',
+          label: 'Academic Goals',
+          content: [
+            "Highlight clear problem statement and target user persona.",
+            "Show architecture diagram linking frontend, backend, and database.",
+            "Prepare a 5–7 minute demo script aligned with rubric criteria.",
+            "Document limitations and future work to demonstrate critical thinking."
+          ]
         }
-      },
-      Entrepreneur: {
-        theme: 'amber',
-        sections:[
-          { id: 'mvp', label: 'MVP Core Architecture', icon: 'Zap' },
-          { id: 'market', label: 'Unit Economics', icon: 'DollarSign' }
-        ],
-        content: {
-          mvp: ["Core Value Prop: Automated workflow engine.", "Tier 1 Features: User Auth, Data Dashboard."],
-          market:["Model: Tiered SaaS (Freemium, Pro at $29/mo).", "Target: SMBs in the high-growth tech sector."]
+      ],
+      Entrepreneur: [
+        {
+          id: 'competitors',
+          label: 'Competitor Analysis',
+          content: [
+            "Global: Identify 3–5 comparable SaaS products and their core positioning.",
+            "Local: Map regional startups serving a similar niche or vertical.",
+            "Your Advantage: Focus on 1–2 sharp differentiators (pricing, UX, niche)."
+          ]
+        },
+        {
+          id: 'business-roadmap',
+          label: 'Business Roadmap',
+          content: [
+            "Month 1: Validate problem with 10–20 customer interviews.",
+            "Month 2: Launch a tightly-scoped MVP to 3–5 design partners.",
+            "Month 3: Refine pricing, messaging, and prepare for a seed round narrative."
+          ]
+        },
+        {
+          id: 'revenue-model',
+          label: 'Revenue Model',
+          content: [
+            "Primary: Recurring SaaS subscription with tiered feature gates.",
+            "Secondary: Optional onboarding / consulting packages.",
+            "Long-Term: Data or analytics add-ons once you reach scale."
+          ]
         }
-      },
-      Hackathon: {
-        theme: 'cyan',
-        sections:[
-          { id: 'pitch', label: 'Winning Pitch Script', icon: 'Mic' },
-          { id: 'speed', label: 'Development Hacks', icon: 'FastForward' }
-        ],
-        content: {
-          pitch:["0:00-0:45: The Problem. Use a personal story.", "1:15-2:30: Live Demo. Navigate the core happy path."],
-          speed:["UI: Use pre-built components (shadcn/ui).", "Data: Use mock JSON files; don't build a full CRUD."]
+      ],
+      Hackathon: [
+        {
+          id: 'tech-stack-hackathon',
+          label: 'Tech Stack',
+          content: [
+            "Frontend: React + Tailwind UI kits for pre-built components.",
+            "Backend: Serverless functions (Vercel/Netlify) or Supabase edge functions.",
+            "Database: Hosted Postgres with simple, flat schemas.",
+            "Auth: Magic links or OAuth providers to avoid custom flows."
+          ]
+        },
+        {
+          id: 'roadmap-48h',
+          label: '48-Hour Roadmap',
+          content: [
+            "Hours 0–6: Align on problem, user story, and core demo path.",
+            "Hours 6–18: Build core UX and happy-path flow only.",
+            "Hours 18–36: Stabilize, add micro-polish, and seed demo data.",
+            "Hours 36–48: Rehearse pitch, refine story, and stress-test demo."
+          ]
+        },
+        {
+          id: 'pitch-strategy',
+          label: 'Pitch Strategy',
+          content: [
+            "Open with a 1–2 sentence story of the user’s pain.",
+            "Demo the product in under 3 minutes, staying on the happy path.",
+            "Close with impact: who benefits, what changes, and what’s next."
+          ]
         }
-      },
-      Team: {
-        theme: 'purple',
-        sections:[
-          { id: 'roles', label: 'Workforce Allocation', icon: 'Users' },
-          { id: 'sprints', label: 'Agile Roadmap', icon: 'Calendar' }
-        ],
-        content: {
-          roles: ["Frontend Architect: Owner of the Design System.", "Backend Lead: Responsible for API design."],
-          sprints:["Sprint 1: Repository initialization.", "Sprint 2: Core feature implementation."]
+      ],
+      Team: [
+        {
+          id: 'tech-stack-team',
+          label: 'Tech Stack',
+          content: [
+            "Monorepo: Use a single repo with clear `frontend/` and `backend/` folders.",
+            "Frontend: React + component library to keep UI consistent.",
+            "Backend: REST or tRPC with shared types to reduce integration bugs.",
+            "Collaboration: Prettier + ESLint + CI to enforce a shared baseline."
+          ]
+        },
+        {
+          id: 'agile-roadmap',
+          label: 'Agile Roadmap',
+          content: [
+            "Sprint 0: Define scope, success metrics, and tech stack.",
+            "Sprint 1: Ship a vertical slice that exercises end-to-end flow.",
+            "Sprint 2: Harden auth, error states, and analytics.",
+            "Sprint 3+: Iterate on user feedback with small, frequent releases."
+          ]
+        },
+        {
+          id: 'role-distribution',
+          label: 'Role Distribution',
+          content: [
+            "Tech Lead: Owns architecture decisions and code review standards.",
+            "Frontend Lead: Owns design system and UX consistency.",
+            "Backend Lead: Owns API contracts, data model, and reliability.",
+            "PM/Coordinator: Owns backlog, sprint planning, and stakeholder updates."
+          ]
         }
-      }
+      ]
     };
 
-    const config = modeConfigs[mode] || modeConfigs.Student;
+    const sections = sectionsByMode[mode] || sectionsByMode.Student;
 
-    return { problem: idea || "Conceptual gap identified in the market.", metrics, ...config };
+    return {
+      project_mode: mode,
+      summary: idea || "Conceptual gap identified in the market.",
+      metrics,
+      sections
+    };
   };
 
   return (
