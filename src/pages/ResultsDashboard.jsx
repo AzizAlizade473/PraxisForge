@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 const ResultsDashboard = () => {
   const { results, selectedMode, refineNode } = useIdea();
   const navigate = useNavigate();
-  const[activeSection, setActiveSection] = useState(0);
+  const [activeSection, setActiveSection] = useState(0);
 
   // Feature 1 State: Micro-Refinement
   const [refiningTarget, setRefiningTarget] = useState({ sectionId: null, index: null });
@@ -19,7 +19,7 @@ const ResultsDashboard = () => {
 
   if (!results) return <div className="pt-32 text-center text-white">No data. <button onClick={() => navigate('/')}>Back</button></div>;
 
-  const currentSectionId = results.sections[activeSection].id;
+  if (!results) return <div className="pt-32 text-center text-white">No data. <button onClick={() => navigate('/')}>Back</button></div>;
 
   // Sync to Notion Animation Logic
   const handleNotionSync = () => {
@@ -29,16 +29,15 @@ const ResultsDashboard = () => {
     setTimeout(() => setSyncState('idle'), 5000);
   };
 
-  // Submit Refinement to Context
   const handleRefineSubmit = async (e) => {
     e.preventDefault();
     if (!refinePrompt.trim()) return;
     
     setIsRefining(true);
-    await refineNode(currentSectionId, refiningTarget.index, refinePrompt);
+    await refineNode(null, refiningTarget.id, refinePrompt);
     
     setIsRefining(false);
-    setRefiningTarget({ sectionId: null, index: null });
+    setRefiningTarget({ id: null });
     setRefinePrompt("");
   };
 
@@ -85,114 +84,88 @@ const ResultsDashboard = () => {
         {/* Left Panel: Summary Metrics */}
         <div className="lg:col-span-4 space-y-6">
           <div className="glass-panel p-8 rounded-3xl border border-white/10">
-            <h1 className="text-2xl font-bold mb-6">Forge Analytics</h1>
+            <h1 className="text-2xl font-bold mb-6">Project Metadata</h1>
             <div className="space-y-6">
-              <Metric label="Success Score" value={`${results.metrics.score}%`} color="text-emerald-400" />
-              <Metric label="Estimated Timeline" value={results.metrics.timeline} color="text-cyan-400" />
-              <Metric label="Complexity" value={results.metrics.difficulty} color="text-amber-400" />
+              <Metric label="Project Mode" value={results.project_mode} color="text-emerald-400" />
+              <Metric label="Tasks Generated" value={Object.keys(results.task_overview || {}).reduce((acc, status) => acc + results.task_overview[status], 0)} color="text-cyan-400" />
             </div>
           </div>
           <div className="glass-panel p-6 rounded-3xl border border-white/10 bg-indigo-600/5">
             <div className="flex items-center gap-2 text-indigo-400 mb-2">
               <Info size={18} />
-              <span className="font-bold text-sm uppercase tracking-widest">Target Context</span>
+              <span className="font-bold text-sm uppercase tracking-widest">Project Summary</span>
             </div>
-            <p className="text-slate-300 text-sm leading-relaxed italic border-l-2 border-indigo-500/30 pl-3">
-              "{results.problem}"
+            <p className="text-slate-300 text-sm leading-relaxed border-l-2 border-indigo-500/30 pl-3">
+              {results.summary}
             </p>
+          </div>
+          <div className="glass-panel p-6 rounded-3xl border border-white/10 bg-indigo-600/5">
+            <div className="flex items-center gap-2 text-amber-400 mb-2">
+              <Sparkles size={18} />
+              <span className="font-bold text-sm uppercase tracking-widest">Key Insights</span>
+            </div>
+            <ul className="text-slate-300 text-sm leading-relaxed list-disc list-inside space-y-2">
+              {results.key_insights && results.key_insights.map((insight, idx) => (
+                <li key={idx}>{insight}</li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        {/* Right Panel: The Interactive AI Nodes */}
+        {/* Right Panel: Dynamic Mode-Specific Sections */}
         <div className="lg:col-span-8">
           <div className="glass-panel rounded-3xl border border-white/10 min-h-[600px] flex flex-col overflow-hidden">
             
             {/* Tabs Header */}
             <div className="flex border-b border-white/5 bg-slate-900/50">
-              {results.sections.map((sec, i) => (
+              {(results.sections || []).map((section, index) => (
                 <button
-                  key={i}
-                  onClick={() => { setActiveSection(i); setRefiningTarget({ sectionId: null, index: null }); }}
-                  className={`flex-1 py-5 text-sm font-bold transition-all ${activeSection === i ? 'bg-indigo-600 border-t-2 border-t-indigo-400 text-white shadow-inner' : 'text-slate-500 hover:text-slate-300 border-t-2 border-t-transparent'}`}
+                  key={section.id || index}
+                  onClick={() => { setActiveSection(index); setRefiningTarget({ id: null }); }}
+                  className={`flex-1 py-5 text-sm font-bold transition-all ${
+                    activeSection === index
+                      ? 'bg-indigo-600 border-t-2 border-t-indigo-400 text-white shadow-inner'
+                      : 'text-slate-500 hover:text-slate-300 border-t-2 border-t-transparent'
+                  }`}
                 >
-                  {sec.label}
+                  {section.label}
                 </button>
               ))}
             </div>
 
             {/* Content Body */}
-            <div className="p-8 md:p-10 flex-1">
-              <div className="space-y-4">
-                {results.content[currentSectionId].map((item, idx) => {
-                  const isBeingRefined = refiningTarget.sectionId === currentSectionId && refiningTarget.index === idx;
-
-                  return (
-                    <div key={idx} className="relative group">
-                      <motion.div 
-                        layout
-                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-                        className={`p-6 rounded-2xl border transition-all ${
-                          isBeingRefined ? 'bg-indigo-900/20 border-indigo-500/50' : 'bg-slate-900/50 border-white/5 hover:border-white/20'
-                        }`}
-                      >
-                        <div className="flex items-start gap-4">
-                          <CheckCircle className="text-indigo-500 mt-1 shrink-0" size={20} />
-                          <span className={`text-lg transition-colors ${item.includes('✨') ? 'text-indigo-200' : 'text-slate-200'}`}>
-                            {item}
-                          </span>
-                        </div>
-
-                        {/* 🌟 FEATURE 1: Micro-Refinement Hover Button */}
-                        {!isBeingRefined && (
-                          <button 
-                            onClick={() => setRefiningTarget({ sectionId: currentSectionId, index: idx })}
-                            className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-bold flex items-center gap-2 shadow-lg"
-                          >
-                            <Wand2 size={14} /> Refine with AI
-                          </button>
-                        )}
-
-                        {/* Refinement Input Dropdown */}
-                        <AnimatePresence>
-                          {isBeingRefined && (
-                            <motion.form 
-                              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                              onSubmit={handleRefineSubmit}
-                              className="mt-6 pt-6 border-t border-indigo-500/20"
-                            >
-                              <div className="flex gap-3">
-                                <input 
-                                  autoFocus
-                                  type="text" 
-                                  placeholder="E.g., Make this cheaper, Target a different demographic..." 
-                                  value={refinePrompt}
-                                  onChange={(e) => setRefinePrompt(e.target.value)}
-                                  className="flex-1 bg-slate-950 border border-indigo-500/30 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-400 transition"
-                                />
-                                <button 
-                                  disabled={isRefining}
-                                  type="submit"
-                                  className="px-6 bg-indigo-600 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-500 disabled:opacity-50 transition"
-                                >
-                                  {isRefining ? <Loader2 className="animate-spin" size={16} /> : <Sparkles size={16} />}
-                                  Update
-                                </button>
-                                <button 
-                                  type="button" 
-                                  onClick={() => setRefiningTarget({ sectionId: null, index: null })}
-                                  className="px-4 text-slate-400 hover:text-white"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </motion.form>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
+            <div className="p-8 md:p-10 flex-1 overflow-y-auto">
+              {results.sections && results.sections.length > 0 ? (
+                <div className="space-y-4">
+                  {Array.isArray(results.sections[activeSection]?.content) ? (
+                    results.sections[activeSection].content.map((item, idx) => (
+                      <div key={idx} className="relative group">
+                        <motion.div
+                          layout
+                          className="p-6 rounded-2xl border bg-slate-900/50 border-white/5 hover:border-white/20 transition-all"
+                        >
+                          <div className="flex items-start gap-4">
+                            <CheckCircle className="text-indigo-500 mt-1 shrink-0" size={20} />
+                            <div className="flex flex-col">
+                              <span className="text-sm text-slate-200">
+                                {item}
+                              </span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 whitespace-pre-wrap text-slate-200">
+                      {results.sections[activeSection]?.content || 'No content available for this section.'}
                     </div>
-                  );
-                })}
-              </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-slate-400 text-center py-10">
+                  No sections available for this mode yet.
+                </div>
+              )}
             </div>
             
           </div>
